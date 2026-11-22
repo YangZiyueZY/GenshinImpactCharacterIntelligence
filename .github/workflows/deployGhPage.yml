@@ -1,0 +1,50 @@
+name: deploy to GitHub Pages
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "page/**"
+      - "data/**"
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      # the site is fully self-hosted: page/ (with the vendored libraries) plus
+      # data/char_data_min.json and data/image/ are the whole artifact, so the
+      # page never loads anything from a third-party CDN
+      - name: Assemble site (page/ + data/)
+        run: |
+          mkdir -p _site/data
+          cp -r page/. _site/
+          cp data/char_data_min.json _site/data/
+          cp data/profile.json _site/data/
+          cp -r data/image _site/data/image
+          cp -r data/voice _site/data/voice
+          du -sh _site
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '_site'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

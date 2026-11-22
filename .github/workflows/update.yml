@@ -1,0 +1,95 @@
+name: update character data
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Only report the diff (no writes, no commit)"
+        type: boolean
+        default: false
+      refresh:
+        description: "Rebuild all voice lines, not just the new characters"
+        type: boolean
+        default: true
+  # The weekly run is intentionally disabled upstream: an external scheduler
+  # fires workflow_dispatch instead, so no cron is configured here.
+  # schedule:
+  #   - cron: "0 0 * * 6"
+
+# the updater commits and pushes back to this repository
+permissions:
+  contents: write
+
+# never let two updates race for data/char_data.json
+concurrency:
+  group: update-character-data
+  cancel-in-progress: false
+
+env:
+  REF_VER: ${{ vars.REF_VER }}
+  REF_DATE: ${{ vars.REF_DATE }}
+  PERIOD: ${{ vars.PERIOD }}
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  updater:
+    # Do not run in forks: this job scrapes miHoYo endpoints and pushes a commit.
+    if: github.repository_owner == 'King-of-Infinite-Space'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: setup python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: requirements.txt
+
+      - name: install python packages
+        run: pip install -r requirements.txt
+
+      # the datamined tables are ~160 MB; reuse them between runs when they are
+      # still fresh (fetch_data.py only accepts caches younger than 24 h)
+      - name: restore datamined tables
+        uses: actions/cache@v4
+        with:
+          path: data_raw
+          key: data_raw-${{ github.run_id }}
+          restore-keys: |
+            data_raw-
+
+      - name: update data
+        env:
+          MSG_URL: ${{ secrets.MSG_URL }}
+          PAYLOAD1: ${{ secrets.PAYLOAD1 }}
+          NOTION_GENSHIN: ${{ secrets.NOTION_GENSHIN }}
+        run: |
+          set -o pipefail
+          # write the report under RUNNER_TEMP: "git add ." must never pick it up
+          LOG="$RUNNER_TEMP/update.log"
+          FLAGS=""
+          if [ "${{ inputs.dry_run }}" = "true" ]; then FLAGS="$FLAGS --dry-run"; fi
+          if [ "${{ inputs.refresh }}" != "false" ]; then FLAGS="$FLAGS --refresh"; fi
+          python ./utils/fetch_data.py $FLAGS | tee "$LOG"
+
+          # side data for the page: profile.json + one voice file per character.
+          # Audio stays on the official CDNs; biligame is best effort (its wiki
+          # rate-limits hard), so a failure there must not fail the run.
+          python ./utils/build_voice_data.py | tee -a "$LOG"
+          python ./utils/biligame_voice.py related | tee -a "$LOG" || true
+
+      - name: append the report to the job summary
+        if: always()
+        run: |
+          LOG="$RUNNER_TEMP/update.log"
+          if [ -f "$LOG" ]; then
+            echo "### data update report" >> "$GITHUB_STEP_SUMMARY"
+            echo "<pre>" >> "$GITHUB_STEP_SUMMARY"
+            tail -n 40 "$LOG" >> "$GITHUB_STEP_SUMMARY"
+            echo "</pre>" >> "$GITHUB_STEP_SUMMARY"
+          fi

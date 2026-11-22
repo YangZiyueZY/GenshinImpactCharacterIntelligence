@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="zh-Hans">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#F2ECE0" />
+<title>提瓦特关系档案馆 · 原神人物关系图谱</title>
+<meta name="description" content="以游戏内语音为证词的原神人物关系档案馆：可检索、可按元素筛选、可查看每句台词的原文与中/日/英/韩配音。" />
+<meta property="og:title" content="提瓦特关系档案馆" />
+<meta property="og:type" content="website" />
+<meta property="og:description" content="以游戏内语音为证词的原神人物关系档案馆。" />
+<link rel="icon" type="image/svg+xml" href="icon.svg" />
+<script src="vendor/cytoscape.min.js"></script>
+<script src="vendor/layout-base.js"></script>
+<script src="vendor/cose-base.js"></script>
+<script src="vendor/cytoscape-fcose.js"></script>
+<script src="vendor/avsdf-base.js"></script>
+<script src="vendor/cytoscape-avsdf.js"></script>
+<script src="vendor/seedrandom.min.js"></script>
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/shell.css" />
+<link rel="stylesheet" href="css/plate.css" />
+<link rel="stylesheet" href="css/dossier.css" />
+</head>
+<body>
+<div id="app">
+  <!-- masthead -->
+  <header class="masthead">
+    <div class="brand">
+      <span class="seal-mark" aria-hidden="true"><svg viewBox="0 0 40 40" width="30" height="30"><rect x="4" y="4" width="32" height="32" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="20" cy="20" r="10" fill="none" stroke="currentColor" stroke-width="1"/><path d="M20 6v28M6 20h28" stroke="currentColor" stroke-width=".6" opacity=".55"/><circle cx="20" cy="20" r="3" fill="currentColor"/></svg></span>
+      <span class="brand-text"><strong>提瓦特关系档案馆</strong><small>TEYVAT RELATIONS ARCHIVE</small></span>
+    </div>
+    <nav class="layout-tabs" id="layoutTabs" role="tablist" aria-label="排列方式">
+      <button role="tab" data-layout="fcose" aria-selected="true" class="is-active">星图</button>
+      <button role="tab" data-layout="concentric" aria-selected="false">同心</button>
+      <button role="tab" data-layout="avsdf" aria-selected="false">环列</button>
+      <button role="tab" data-layout="grid" aria-selected="false">年表</button>
+    </nav>
+    <div class="search-wrap">
+      <svg class="ico search-ico" aria-hidden="true"><use href="vendor/icons.svg#search"></use></svg>
+      <input id="search" type="search" autocomplete="off" spellcheck="false" placeholder="检索角色、别称或称号（按 / 聚焦）" aria-label="检索角色" />
+      <div class="search-results" id="searchResults" role="listbox" aria-label="检索结果"></div>
+    </div>
+    <div class="masthead-actions">
+      <button class="icon-btn" id="toggleIndex" aria-label="显示或隐藏索引" aria-pressed="true" title="索引"><svg class="ico"><use href="vendor/icons.svg#filter"></use></svg></button>
+      <button class="icon-btn" id="resetView" aria-label="重置视图" title="重置视图"><svg class="ico"><use href="vendor/icons.svg#reset"></use></svg></button>
+      <button class="lang-btn" id="langToggle" aria-label="切换中英文文本">中 / EN</button>
+    </div>
+  </header>
+
+  <!-- index rail -->
+  <aside class="index-rail" id="indexRail" aria-label="索引与统计">
+    <div class="rail-head"><span class="rail-kicker">INDEX</span><h2>馆藏索引</h2><p>语音证言 · 角色关系总目</p></div>
+    <section class="rail-block" data-filter-group="element"><h3><span class="num">01</span> 元素 <small>Element</small></h3><div class="chips" id="filterElement"></div></section>
+    <section class="rail-block" data-filter-group="weapon"><h3><span class="num">02</span> 武器 <small>Weapon</small></h3><div class="chips" id="filterWeapon"></div></section>
+    <section class="rail-block" data-filter-group="region"><h3><span class="num">03</span> 地区 <small>Region</small></h3><div class="chips" id="filterRegion"></div></section>
+    <section class="rail-block" data-filter-group="rarity"><h3><span class="num">04</span> 星级 <small>Rarity</small></h3><div class="chips" id="filterRarity"></div></section>
+    <section class="rail-block rail-overview"><h3><span class="num">05</span> 馆藏概览 <small>Overview</small></h3>
+      <div class="stat-grid"><div class="stat"><b id="statNodes">0</b><span>在册角色</span></div><div class="stat"><b id="statEdges">0</b><span>证言连线</span></div><div class="stat"><b id="statAvg">0</b><span>平均牵连</span></div></div>
+      <p class="rail-note">统计不含零连线角色；早登场的角色没有机会评价后来者，被提及次数天然偏低。</p>
+      <div class="mini-list" id="topMentioned" aria-label="被提及最多"></div>
+    </section>
+    <section class="rail-block"><h3><span class="num">06</span> 关系链 <small>Path</small></h3>
+      <p class="rail-hint" id="pathHint">在图中依次点选两名角色，查出他们之间最短的关系链。</p>
+      <button class="ghost-btn" id="pathClear" hidden>清除关系链</button>
+      <button class="ghost-btn" id="randomPair">随机看一对双向提及</button>
+    </section>
+    <footer class="rail-foot"><span>证言取自游戏内语音 <em>© miHoYo</em></span></footer>
+  </aside>
+
+  <!-- graph plate -->
+  <main class="stage" id="stage">
+    <div class="plate-header" id="plateHeader">
+      <div><span class="plate-kicker">PLATE · <span id="plateNo">I</span></span><h1 id="plateTitle">星图</h1></div>
+      <p id="plateSub">力导向布局 · 节点为角色，连线为语音中的「关于…」评价</p>
+    </div>
+    <div class="mobile-layout-switch" id="mobileLayoutSwitch" role="tablist" aria-label="排列方式">
+      <button role="tab" data-layout="fcose" aria-selected="true" class="is-active">星图</button>
+      <button role="tab" data-layout="concentric" aria-selected="false">同心</button>
+      <button role="tab" data-layout="avsdf" aria-selected="false">环列</button>
+      <button role="tab" data-layout="grid" aria-selected="false">年表</button>
+    </div>
+    <svg class="plate-constellation" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><path d="M120 620 Q 300 470 470 520 T 820 400"/><path d="M210 180 Q 380 260 560 210 T 900 300"/><path d="M980 640 Q 860 520 700 560 T 420 700"/></svg>
+    <div class="plate-ticks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div id="cy" role="application" aria-label="人物关系图交互区域"></div>
+    <div class="legend" id="legend" aria-label="图例"></div>
+    <div class="hint" id="hint">点选角色查看档案与语音 · 悬停连线听这段评价</div>
+    <div class="pathbar" id="pathbar" hidden></div>
+    <div class="quote-card" id="quoteCard" aria-hidden="true"></div>
+    <div class="zoom-controls" id="zoomControls" aria-label="缩放控制">
+      <button id="zoomOut" aria-label="缩小"><svg class="ico"><use href="vendor/icons.svg#zoom-out"></use></svg></button>
+      <span id="zoomLevel">100%</span>
+      <button id="zoomIn" aria-label="放大"><svg class="ico"><use href="vendor/icons.svg#zoom-in"></use></svg></button>
+    </div>
+    <button class="fab-index" id="fabIndex" aria-label="打开索引"><svg class="ico"><use href="vendor/icons.svg#filter"></use></svg><span>索引</span></button>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  </main>
+
+  <!-- dossier -->
+  <aside class="dossier" id="dossier" aria-hidden="true" aria-label="角色档案">
+    <div class="sheet-grip" id="dossierGrip" aria-hidden="true"></div>
+    <button class="dossier-close" id="dossierClose" aria-label="关闭档案"><svg class="ico"><use href="vendor/icons.svg#close"></use></svg></button>
+    <div class="dossier-scroll" id="dossierBody"></div>
+  </aside>
+
+  <!-- player -->
+  <div class="player" id="player" aria-hidden="true"><div class="player-body" id="playerBody"></div></div>
+
+  <div class="boot" id="boot"><div class="boot-inner"><div class="boot-seal" aria-hidden="true"></div><p>正在归档…</p></div></div>
+</div>
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

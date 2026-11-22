@@ -1,0 +1,8 @@
+local/*
+*.log
+*.pyc
+__pycache__/
+.env
+.vscode
+.vercel
+data_raw/*

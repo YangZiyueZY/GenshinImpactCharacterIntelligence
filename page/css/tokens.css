@@ -1,0 +1,83 @@
+/* Editorial Archive — design tokens, reset, body grid
+   Link order: 1 of 4. Palette: warm paper / ink / vermilion seal / teal data. */
+:root{
+  color-scheme:light;
+  --paper:#F2ECE0;
+  --paper-2:#E9E1D2;
+  --paper-3:#E1D7C5;
+  --ink:#17140F;
+  --ink-2:#4A4338;
+  --ink-3:#5F5747;
+  --rule:rgba(23,20,15,.18);
+  --rule-soft:rgba(23,20,15,.09);
+  --seal:#A63E2E;
+  --seal-soft:rgba(166,62,46,.1);
+  --teal:#2B4A52;
+  --focus:#A63E2E;
+
+  --space-1:4px; --space-2:8px; --space-3:12px; --space-4:16px;
+  --space-5:24px; --space-6:32px; --space-7:48px; --space-8:64px;
+  --tap:44px;
+  --rail-w:clamp(272px,24vw,352px);
+  --head-h:72px;
+
+  --font-serif:"Songti SC","STSong","Noto Serif CJK SC","Source Han Serif SC","SimSun",serif;
+  --font-sans:"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  --font-mono:"SFMono-Regular","Cascadia Mono","JetBrains Mono","Menlo","Consolas","Liberation Mono",monospace;
+  --fs-xs:11px; --fs-sm:12px; --fs-md:13px; --fs-lg:16px; --fs-xl:20px; --fs-xxl:28px;
+  --lh-tight:1.18; --lh-base:1.6;
+  --track:.06em;
+  --ease:cubic-bezier(.22,.61,.36,1);
+  --dur-fast:120ms; --dur:220ms; --dur-slow:420ms;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;min-height:100%}
+html{background:var(--paper);-webkit-text-size-adjust:100%}
+body{
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--font-sans);
+  font-size:var(--fs-md);
+  line-height:var(--lh-base);
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+h1,h2,h3,h4,p,dl,dd,figure{margin:0}
+ul,ol{margin:0;padding:0;list-style:none}
+img,svg{max-width:100%}
+button:focus-visible,input:focus-visible,[role="tab"]:focus-visible,[role="option"]:focus-visible,[role="slider"]:focus-visible{
+  outline:2px solid var(--focus);outline-offset:2px;
+}
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+}
+#app{
+  display:grid;
+  grid-template-columns:var(--rail-w) minmax(0,1fr);
+  grid-template-rows:var(--head-h) minmax(0,1fr);
+  grid-template-areas:"mast mast" "rail stage";
+  width:100%;height:100dvh;min-height:100dvh;
+  padding-bottom:env(safe-area-inset-bottom,0);
+  overflow:hidden;
+}
+#app>.masthead{grid-area:mast;z-index:40}
+#app>.index-rail{grid-area:rail;min-height:0;min-width:0;z-index:30}
+#app>.stage{grid-area:stage;min-height:0;min-width:0;position:relative;z-index:1}
+#app>.dossier,#app>.player{position:fixed;z-index:60}
+body.index-hidden #app{grid-template-columns:minmax(0,1fr);grid-template-areas:"mast" "stage"}
+body.index-hidden .index-rail{display:none}
+@media (max-width:760px){
+  :root{--head-h:156px}
+  #app{grid-template-columns:minmax(0,1fr);grid-template-areas:"mast" "stage"}
+  .index-rail{
+    position:fixed;left:0;top:var(--head-h);bottom:0;width:min(88vw,360px);
+    transform:translate3d(-102%,0,0);transition:transform var(--dur) var(--ease);
+    box-shadow:none;
+  }
+  body.index-open .index-rail{transform:translate3d(0,0,0)}
+  body:not(.index-open) .index-rail{visibility:hidden;transition:transform var(--dur) var(--ease),visibility 0s var(--dur)}
+  body.index-open #app>.stage{grid-area:stage}
+}

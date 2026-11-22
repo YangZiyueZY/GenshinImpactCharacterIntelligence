@@ -1,0 +1,4 @@
+# requests is required; notion_client is optional (only used when NOTION_GENSHIN is set).
+# beautifulsoup4 was dropped: it belonged to the pre-2025 honeyhunterworld scraper.
+requests==2.*
+notion_client==0.*
