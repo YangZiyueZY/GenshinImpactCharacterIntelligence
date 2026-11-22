@@ -90,17 +90,36 @@ CI：
 
 两个脚本都可重复运行，分别缓存 `data_raw/hoyolab/` 与 `data_raw/biligame/`。
 
-## 贡献者与代码来源 | Credits and upstream code
+## 贡献者与上游仓库 | Contributors and upstream
 
-本项目是在上游仓库 [King-of-Infinite-Space/genshin-social-network](https://github.com/King-of-Infinite-Space/genshin-social-network) 的基础上继续开发的。以下内容继承或源自上游仓库：
+本仓库基于上游项目继续开发：
 
-- **数据模型与数据文件**：`data/char_data.json`、`data/char_data_min.json`、`data/profile.json`、`data/alias.json`、`data/voice/**`、`data/image/**` 的角色、证言、档案、别称与语音数据。
-- **数据抓取与处理脚本**：`utils/fetch_data.py`、`utils/build_voice_data.py`、`utils/biligame_voice.py`、`utils/hoyolab_source.py`、`utils/notion_db.py`、`utils/prepare_data.py`、`utils/download_images.py`。
-- **自动化工作流**：`.github/workflows/update.yml` 的数据更新逻辑，以及 `.github/workflows/deployGhPage.yml` 的 GitHub Pages 部署思路。
-- **图谱算法与核心交互语义**：四布局中的 fcose / avsdf / 同心圆 / 年表排列参数，角色点选、双人对比、语音源切换、检索、筛选、关系链、深链等功能的原始设计。
-- **本地依赖库**：`page/vendor/` 下的 Cytoscape.js、fcose、avsdf、layout-base、seedrandom 等第三方库文件沿用自上游项目依赖集合。
+- 上游仓库：[King-of-Infinite-Space/genshin-social-network](https://github.com/King-of-Infinite-Space/genshin-social-network)
+- 上游贡献者：
+  - [King-of-Infinite-Space](https://github.com/King-of-Infinite-Space) — 上游项目作者，贡献 141 次提交。
+  - [github-actions[bot]](https://github.com/apps/github-actions) — 上游数据更新与 Pages 自动化，贡献 45 次提交。
 
-本仓库在此基础上的主要改动：以「编辑式档案馆 / Editorial Archive」方向从零重写了 `page/index.html`、`page/css/**`、`page/js/**` 的视觉结构与前端模块划分，保留并迁移原有功能语义，同时调整了移动端信息架构和性能策略。
+上游贡献者数据来自 GitHub Contributors API：`https://api.github.com/repos/King-of-Infinite-Space/genshin-social-network/contributors`。
+
+### 来自上游仓库的文件与代码
+
+按当前工作区与上游仓库 `d859abd` 的文件哈希逐项比对，当前仓库中 **127 个文件与上游完全一致**，主要包括：
+
+- 数据文件：`data/char_data.json`、`data/char_data_min.json`、`data/alias.json`；
+- 官方头像：`data/image/**`，共 122 个图片文件；
+- 项目基础文件：`LICENSE.md`、`.gitattributes`。
+
+此外，以下文件虽经修改，但保留或沿用了上游逻辑：
+
+- `utils/fetch_data.py`、`utils/download_images.py`、`utils/notion_db.py`、`utils/prepare_data.py`；
+- `.github/workflows/update.yml`、`.github/workflows/deployGhPage.yml`；
+- `page/index.html` 中原有的数据模型、布局与交互语义。
+
+本仓库新增或重写的主要部分：
+
+- `page/css/**`、`page/js/**`、`page/icon.svg`、`page/vendor/icons.svg`：编辑式档案馆风格的重写前端；
+- `data/profile.json`、`data/voice/**`、`utils/biligame_voice.py`、`utils/build_voice_data.py`、`utils/hoyolab_source.py`：当前分支中的档案、语音与多来源语音构建数据；
+- `page/vendor/` 下的 Cytoscape.js 及布局插件文件保留在本仓库中以便静态部署。
 
 ## 版权声明 | Copyright disclaimer
 
